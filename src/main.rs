@@ -72,12 +72,10 @@ async fn handle_post(
     new_key_value: KeyValue,
     store: Arc<Mutex<HashMap<String, String>>>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    info!("A POST Request for key: {}", new_key_value.key);
-    info!("A POST Request for key: {}", new_key_value.value);
     let mut store = store.lock().unwrap();
     let cloned_key_value = new_key_value.clone();
     store.insert(new_key_value.key, new_key_value.value);
     
     info!("Stored key-value pair: {:?}", cloned_key_value);
-    Ok("yes")
+    Ok("Success")
 }
