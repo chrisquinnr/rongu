@@ -37,7 +37,7 @@ async fn main() {
     let routes = get_route.or(post_route);
 
     // Start the server
-    warp::serve(routes).run(([127, 0, 0, 1], 8080)).await;
+    warp::serve(routes).run(([127, 0, 0, 1], 80)).await;
 }
 
 // A filter that injects the key-value store into route handlers
