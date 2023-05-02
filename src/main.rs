@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use serde::{Deserialize, Serialize};
-use warp::{Filter};
+use warp::Filter;
 
 use env_logger::Env;
 use log::info;
@@ -33,17 +33,16 @@ async fn main() {
         .and(with_key_value_store(key_value_store.clone()))
         .and_then(handle_post);
 
-    // Combine the routes into a single filter
     let routes = get_route.or(post_route);
 
     // Start the server
-    warp::serve(routes).run(([127, 0, 0, 1], 8080)).await;
+    warp::serve(routes).run(([127, 0, 0, 1], 8090)).await;
 }
 
-// A filter that injects the key-value store into route handlers
 fn with_key_value_store(
     store: Arc<Mutex<HashMap<String, String>>>,
-) -> impl Filter<Extract = (Arc<Mutex<HashMap<String, String>>>,), Error = std::convert::Infallible> + Clone {
+) -> impl Filter<Extract = (Arc<Mutex<HashMap<String, String>>>,), Error = std::convert::Infallible>
+       + Clone {
     warp::any().map(move || store.clone())
 }
 
@@ -52,8 +51,7 @@ async fn handle_get(
     key: String,
     store: Arc<Mutex<HashMap<String, String>>>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-
-    info!("A GET Request for key: {}", key);
+    info!("Request for key: {}", key);
 
     let store = store.lock().unwrap();
 
@@ -63,11 +61,13 @@ async fn handle_get(
             value: value.clone(),
         }))
     } else {
-        Err(warp::reject::not_found())
+        Ok(warp::reply::json(&KeyValue {
+            key: key.clone(),
+            value: "Not Found".to_string(),
+        }))
     }
 }
 
-// A route handler for POST requests
 async fn handle_post(
     new_key_value: KeyValue,
     store: Arc<Mutex<HashMap<String, String>>>,
@@ -75,7 +75,11 @@ async fn handle_post(
     let mut store = store.lock().unwrap();
     let cloned_key_value = new_key_value.clone();
     store.insert(new_key_value.key, new_key_value.value);
-    
+
     info!("Stored key-value pair: {:?}", cloned_key_value);
-    Ok("Success")
+
+    Ok(warp::reply::json(&KeyValue {
+        key: cloned_key_value.key.clone(),
+        value: cloned_key_value.value.clone(),
+    }))
 }
